@@ -1,121 +1,947 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8">
-<meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>Premium Gold Timer</title>
+<meta charset="UTF-8"/>
+<meta name="viewport" content="width=device-width, initial-scale=1.0, user-scalable=no"/>
+<title>Still Stayed</title>
+<link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,700;1,400;1,700&family=DM+Sans:opsz,wght@9..40,300;9..40,400;9..40,500&display=swap" rel="stylesheet"/>
 <style>
-/* SAME STYLING AS BEFORE — unchanged */
-* {
-    margin: 0;
-    padding: 0;
-    box-sizing: border-box;
-    font-family: 'Helvetica Neue', Arial, sans-serif;
+:root{
+  --pink:#ffb6d9;
+  --pink2:#ff8fc4;
+  --pink-faint:rgba(255,182,217,0.12);
+  --deep:#070406;
+  --card:#120810;
+  --card2:#1a0d16;
+  --text:rgba(255,255,255,0.90);
+  --muted:rgba(255,255,255,0.45);
+  --border:rgba(255,182,217,0.18);
+  --safe-bottom:env(safe-area-inset-bottom,0px);
 }
-body {
-    background: linear-gradient(135deg, #0a0a0a, #1a1a1a);
-    min-height: 100vh;
-    display: flex;
-    flex-direction: column;
-    align-items: center;
-    justify-content: center;
-    padding: 20px;
-    color: #d4af37;
+*{margin:0;padding:0;box-sizing:border-box;-webkit-tap-highlight-color:transparent;}
+html{height:100%;-webkit-text-size-adjust:100%;}
+body{width:100%;height:100%;overflow:hidden;background:var(--deep);color:var(--text);font-family:'DM Sans',sans-serif;overscroll-behavior:none;}
+
+/* ── Background canvas ── */
+#bg{position:fixed;inset:0;pointer-events:none;z-index:0;}
+
+/* ── Screen system ── */
+.screen{
+  position:fixed;inset:0;display:flex;flex-direction:column;
+  align-items:center;justify-content:center;
+  opacity:0;pointer-events:none;
+  transition:opacity .7s ease;z-index:10;
+  padding:max(40px,env(safe-area-inset-top,40px)) 24px max(40px,var(--safe-bottom));
+  text-align:center;overflow:hidden;
 }
-.container {
-    width: 100%;
-    max-width: 500px;
-    text-align: center;
+.screen.active{opacity:1;pointer-events:all;}
+
+/* ── Intro ── */
+#s-intro h1{
+  font-family:'Playfair Display',serif;
+  font-size:clamp(52px,14vw,96px);
+  font-style:italic;color:var(--pink);line-height:1.05;
+  animation:glow 3s ease-in-out infinite alternate;
+  letter-spacing:-1px;
 }
-h1 {
-    font-size: 2.2rem;
-    margin-bottom: 40px;
-    text-shadow: 0 0 10px rgba(212, 175, 55, 0.5);
-    letter-spacing: 1px;
-    font-weight: 300;
+@keyframes glow{
+  from{text-shadow:0 0 40px rgba(255,182,217,0.15)}
+  to{text-shadow:0 0 100px rgba(255,182,217,0.45)}
 }
-.buttons {
-    display: grid;
-    grid-template-columns: repeat(3, 1fr);
-    gap: 18px;
-    margin-top: 20px;
+#s-intro .subtitle{
+  margin-top:18px;font-size:clamp(13px,3.5vw,16px);
+  color:var(--muted);font-weight:300;letter-spacing:2px;
+  text-transform:uppercase;
 }
-.btn {
-    background: linear-gradient(to bottom, #d4af37, #b8860b);
-    color: #000;
-    border: none;
-    border-radius: 10px;
-    padding: 22px 10px;
-    font-size: 1.2rem;
-    font-weight: 500;
-    cursor: pointer;
-    transition: all 0.2s ease;
-    box-shadow: 0 5px 0 #8b7500, 0 8px 15px rgba(0, 0, 0, 0.6);
+.start-btn{
+  margin-top:52px;padding:15px 44px;
+  background:transparent;border:1px solid var(--pink);
+  color:var(--pink);font-family:'DM Sans',sans-serif;
+  font-size:clamp(12px,3.5vw,14px);
+  letter-spacing:3px;text-transform:uppercase;cursor:pointer;
+  border-radius:2px;transition:all .3s;
+  -webkit-appearance:none;appearance:none;
+  min-height:52px;
 }
-.status {
-    margin-top: 35px;
-    font-size: 1.3rem;
-    height: 40px;
+.start-btn:hover,.start-btn:active{background:var(--pink);color:var(--deep);}
+
+/* ── Story screen ── */
+#s-story{justify-content:flex-start;padding:0;}
+#story-inner{
+  width:100%;max-width:680px;margin:0 auto;
+  padding:clamp(40px,8vw,70px) clamp(20px,6vw,32px) calc(80px + var(--safe-bottom));
+  height:100vh;overflow-y:auto;overflow-x:hidden;
+  scrollbar-width:none;-ms-overflow-style:none;
+  -webkit-overflow-scrolling:touch;
+}
+#story-inner::-webkit-scrollbar{display:none;}
+
+/* ── Chapters ── */
+.chapter{
+  margin-bottom:clamp(60px,12vw,90px);
+  opacity:0;transform:translateY(24px);
+  transition:opacity .65s ease,transform .65s ease;
+}
+.chapter.show{opacity:1;transform:translateY(0);}
+.chapter-label{
+  font-size:10px;letter-spacing:4px;text-transform:uppercase;
+  color:var(--pink);margin-bottom:14px;opacity:.65;
+}
+.chapter h2{
+  font-family:'Playfair Display',serif;
+  font-size:clamp(26px,6vw,40px);
+  font-style:italic;color:#fff;margin-bottom:18px;line-height:1.2;
+}
+.chapter p{
+  font-size:clamp(15px,4vw,17px);line-height:1.95;
+  color:var(--text);font-weight:300;white-space:pre-line;
+}
+.chapter-divider{width:36px;height:1px;background:var(--pink);opacity:.35;margin:18px 0;}
+
+/* ── Game blocks ── */
+.game-block{
+  margin-top:24px;
+  border:1px solid var(--border);
+  border-radius:14px;overflow:hidden;background:var(--card);
+}
+.game-title{
+  padding:11px 18px;font-size:10px;letter-spacing:3px;
+  text-transform:uppercase;color:var(--pink);opacity:.7;
+  border-bottom:1px solid var(--border);
+}
+
+/* ── Continue button ── */
+.cont-btn{
+  display:inline-block;margin-top:28px;
+  padding:13px 36px;background:transparent;
+  border:1px solid rgba(255,182,217,0.35);
+  color:var(--pink);font-family:'DM Sans',sans-serif;
+  font-size:clamp(11px,3.5vw,13px);
+  letter-spacing:3px;text-transform:uppercase;cursor:pointer;
+  border-radius:2px;transition:all .3s;
+  min-height:48px;-webkit-appearance:none;appearance:none;
+}
+.cont-btn:hover,.cont-btn:active{
+  border-color:var(--pink);background:rgba(255,182,217,0.08);
+}
+
+/* ── Bumble game ── */
+#game-bumble{padding:24px 20px;text-align:center;}
+.bumble-card{
+  width:min(220px,70vw);height:min(280px,55vw);
+  border-radius:18px;margin:0 auto 24px;
+  background:linear-gradient(160deg,var(--card),var(--card2));
+  border:1px solid var(--border);
+  display:flex;flex-direction:column;align-items:center;
+  justify-content:center;gap:12px;
+  position:relative;user-select:none;
+  transition:transform .4s ease,opacity .4s ease;
+}
+.bumble-card .avatar{
+  width:72px;height:72px;border-radius:50%;
+  background:radial-gradient(circle at 35% 35%,#ffb6d9,#c4607a);
+  display:flex;align-items:center;justify-content:center;font-size:30px;
+}
+.bumble-card .name{font-size:19px;font-weight:500;color:#fff;}
+.bumble-card .sub{font-size:12px;color:var(--muted);}
+.bumble-btns{display:flex;gap:20px;justify-content:center;}
+.bumble-btns button{
+  width:60px;height:60px;border-radius:50%;border:none;
+  cursor:pointer;font-size:22px;transition:transform .2s;
+  -webkit-appearance:none;appearance:none;
+  display:flex;align-items:center;justify-content:center;
+}
+.bumble-btns button:active{transform:scale(0.92)!important;}
+.btn-nope{background:#1c1c1c;color:#666;}
+.btn-like{background:linear-gradient(135deg,#ff8fc4,#ffb6d9);color:#fff;}
+.bumble-hint{font-size:12px;color:var(--muted);margin-top:10px;}
+#bumble-result{font-size:14px;color:var(--pink);min-height:22px;margin-top:6px;font-style:italic;}
+
+/* ── Call game ── */
+#game-call{padding:24px 20px;text-align:center;}
+.phone-frame{
+  width:min(200px,55vw);
+  margin:0 auto;
+  border:2px solid #2a2a2a;
+  border-radius:34px;background:#080808;
+  overflow:hidden;
+  display:flex;flex-direction:column;
+  align-items:center;
+  padding:28px 14px 20px;gap:10px;
+  position:relative;
+}
+.phone-notch{
+  width:60px;height:6px;background:#1a1a1a;
+  border-radius:3px;margin-bottom:8px;
+}
+.call-avatar{
+  width:68px;height:68px;border-radius:50%;
+  background:radial-gradient(circle at 35% 35%,#ffb6d9,#c4607a);
+  display:flex;align-items:center;justify-content:center;font-size:26px;
+  animation:pulse-ring 2s infinite;
+}
+@keyframes pulse-ring{
+  0%{box-shadow:0 0 0 0 rgba(255,182,217,0.4)}
+  70%{box-shadow:0 0 0 14px rgba(255,182,217,0)}
+  100%{box-shadow:0 0 0 0 rgba(255,182,217,0)}
+}
+.call-name{font-size:17px;font-weight:500;color:#fff;}
+.call-status{font-size:11px;color:var(--muted);letter-spacing:1px;}
+.call-timer{
+  font-size:20px;color:var(--pink);
+  font-family:'Playfair Display',serif;font-style:italic;
+  min-height:28px;
+}
+.call-btns{display:flex;gap:14px;margin-top:8px;}
+.call-btns button{
+  width:50px;height:50px;border-radius:50%;border:none;
+  cursor:pointer;font-size:20px;
+  -webkit-appearance:none;appearance:none;
+  display:flex;align-items:center;justify-content:center;
+  transition:transform .15s;
+}
+.call-btns button:active{transform:scale(0.9);}
+.btn-answer{background:#27ae60;}
+.btn-hang{background:#c0392b;}
+#call-msg{
+  font-size:13px;color:var(--pink);
+  min-height:20px;margin-top:14px;
+  font-style:italic;text-align:center;
+  padding:0 8px;
+}
+
+/* ── Bugs game ── */
+#game-bugs{padding:20px;}
+.bug-arena{
+  width:100%;height:clamp(160px,45vw,210px);
+  border-radius:12px;
+  background:linear-gradient(145deg,#1f0a18,#2d1226);
+  position:relative;overflow:hidden;cursor:crosshair;
+  border:1px solid rgba(255,182,217,0.12);
+}
+.bug{
+  position:absolute;font-size:clamp(20px,5vw,24px);
+  cursor:pointer;user-select:none;
+  transition:transform .15s,opacity .2s;
+  animation:scurry linear infinite;
+  padding:6px;
+}
+@keyframes scurry{
+  0%{transform:translateX(0) rotate(0deg)}
+  25%{transform:translateX(16px) rotate(12deg)}
+  50%{transform:translateX(-8px) rotate(-8deg)}
+  75%{transform:translateX(12px) rotate(6deg)}
+  100%{transform:translateX(0) rotate(0deg)}
+}
+#bug-score{
+  text-align:center;margin-top:10px;
+  font-size:14px;color:var(--pink);min-height:20px;
+}
+#bug-counter{
+  display:flex;gap:8px;justify-content:center;
+  font-size:12px;color:var(--muted);margin-top:6px;
+}
+
+/* ── Paint game ── */
+#game-paint{padding:20px;}
+.paint-canvas-wrap{border-radius:10px;overflow:hidden;}
+#paint-canvas{
+  width:100%;height:clamp(120px,35vw,160px);
+  cursor:crosshair;display:block;
+  background:#f0f0f0;border-radius:10px;
+  border:2px solid rgba(255,182,217,0.25);
+  touch-action:none;
+}
+#paint-progress{
+  text-align:center;margin-top:10px;
+  font-size:13px;color:var(--pink);
+}
+.paint-bar-wrap{
+  width:100%;height:5px;background:#1a0f18;
+  border-radius:3px;margin-top:8px;overflow:hidden;
+}
+.paint-bar{
+  height:100%;background:linear-gradient(90deg,#ffb6d9,#ff8fc4);
+  width:0%;transition:width .3s;
+}
+
+/* ── IKEA game ── */
+#game-ikea{padding:20px;text-align:center;}
+.ikea-items{
+  display:flex;flex-wrap:wrap;gap:8px;
+  justify-content:center;margin-bottom:16px;
+}
+.ikea-item{
+  padding:10px 16px;border-radius:8px;
+  background:var(--card2);border:1px solid var(--border);
+  font-size:clamp(12px,3.5vw,14px);cursor:pointer;
+  transition:all .25s;color:var(--muted);
+  min-height:44px;display:flex;align-items:center;
+  -webkit-appearance:none;
+}
+.ikea-item.picked{
+  background:rgba(255,182,217,0.12);
+  border-color:var(--pink);color:var(--pink);
+}
+.ikea-cart{
+  border-top:1px solid rgba(255,182,217,0.12);
+  padding-top:12px;font-size:12px;color:var(--muted);
+  min-height:36px;line-height:1.7;
+}
+#ikea-msg{
+  font-size:13px;color:var(--pink);
+  margin-top:8px;font-style:italic;min-height:20px;
+}
+
+/* ── Final screen ── */
+#s-final{background:radial-gradient(ellipse at 50% 35%,#280d1e,#070406);}
+#s-final h1{
+  font-family:'Playfair Display',serif;
+  font-size:clamp(38px,10vw,76px);
+  font-style:italic;color:var(--pink);line-height:1.15;
+  text-shadow:0 0 60px rgba(255,182,217,0.3);
+}
+#s-final p{
+  margin-top:clamp(20px,5vw,28px);
+  font-size:clamp(14px,4vw,17px);
+  line-height:1.95;color:var(--text);
+  max-width:540px;font-weight:300;white-space:pre-line;
+}
+.hearts{position:absolute;inset:0;pointer-events:none;overflow:hidden;}
+.heart{
+  position:absolute;bottom:-40px;
+  font-size:18px;animation:rise linear forwards;opacity:0;
+}
+@keyframes rise{
+  0%{transform:translateY(0) scale(.8) rotate(-10deg);opacity:.9}
+  50%{transform:translateY(-50vh) scale(1) rotate(10deg);opacity:.6}
+  100%{transform:translateY(-110vh) scale(1.2) rotate(-5deg);opacity:0}
+}
+
+/* ── Progress bar ── */
+#progress{
+  position:fixed;top:0;left:0;height:2px;
+  background:linear-gradient(90deg,var(--pink2),var(--pink));
+  width:0%;transition:width .4s;z-index:100;
+}
+
+/* ── Nav dots ── */
+#nav-dots{
+  position:fixed;right:16px;top:50%;
+  transform:translateY(-50%);
+  display:flex;flex-direction:column;gap:10px;
+  z-index:100;opacity:0;transition:opacity .5s;
+}
+#nav-dots.show{opacity:1;}
+.dot{
+  width:5px;height:5px;border-radius:50%;
+  background:rgba(255,182,217,0.25);cursor:pointer;
+  transition:all .3s;
+}
+.dot.active{background:var(--pink);transform:scale(1.5);}
+
+/* ── Scroll hint ── */
+#scroll-hint{
+  position:fixed;bottom:max(24px,var(--safe-bottom));
+  left:50%;transform:translateX(-50%);
+  font-size:10px;letter-spacing:3px;text-transform:uppercase;
+  color:var(--muted);z-index:100;opacity:0;transition:opacity .5s;
+  pointer-events:none;text-align:center;
+}
+#scroll-hint.show{opacity:1;}
+.scroll-arrow{
+  display:block;margin:5px auto 0;width:10px;height:10px;
+  border-right:1px solid var(--muted);border-bottom:1px solid var(--muted);
+  transform:rotate(45deg);animation:bounce-down 1.6s ease-in-out infinite;
+}
+@keyframes bounce-down{
+  0%,100%{transform:rotate(45deg) translateY(0)}
+  50%{transform:rotate(45deg) translateY(4px)}
+}
+
+/* ── Floating petals (decorative) ── */
+.petal{
+  position:fixed;font-size:14px;
+  pointer-events:none;z-index:1;
+  animation:fall-petal linear forwards;opacity:0;
+}
+@keyframes fall-petal{
+  0%{opacity:0;transform:translateY(-20px) rotate(0deg)}
+  10%{opacity:.4}
+  90%{opacity:.2}
+  100%{opacity:0;transform:translateY(100vh) rotate(360deg)}
 }
 </style>
 </head>
 <body>
+<canvas id="bg"></canvas>
+<div id="progress"></div>
+<div id="nav-dots"></div>
+<div id="scroll-hint"><span>scroll</span><span class="scroll-arrow"></span></div>
 
-<div class="container">
-    <h1>PREMIUM TIMER</h1>
-    <div class="status" id="status">Select Duration</div>
-
-    <div class="buttons">
-        <button class="btn" data-time="0.1">0.1 SEC</button>
-        <button class="btn" data-time="0.5">0.5 SEC</button>
-        <button class="btn" data-time="1">1 SEC</button>
-        <button class="btn" data-time="2">2 SEC</button>
-        <button class="btn" data-time="3">3 SEC</button>
-        <button class="btn" data-time="5">5 SEC</button>
-    </div>
-
-    <div class="footer">PREMIUM TIME MANAGEMENT</div>
+<!-- Intro -->
+<div class="screen active" id="s-intro">
+  <h1>Still<br/>Stayed</h1>
+  <p class="subtitle">a love story in five chapters</p>
+  <button class="start-btn" onclick="startStory()">begin ↓</button>
 </div>
 
-<!-- Firebase -->
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-app-compat.js"></script>
-<script src="https://www.gstatic.com/firebasejs/9.23.0/firebase-firestore-compat.js"></script>
+<!-- Story -->
+<div class="screen" id="s-story">
+  <div id="story-inner">
+
+    <!-- Ch 1 -->
+    <div class="chapter" id="ch0">
+      <div class="chapter-label">Chapter I</div>
+      <h2>Two Lost People</h2>
+      <div class="chapter-divider"></div>
+      <p>We met on Bumble.
+
+Neither of us had any idea what we were doing — or what we wanted. We were just two people navigating something messy and undefined, choosing to keep talking anyway.
+
+No labels. No expectations. Just late nights and long conversations and something that felt impossible to name.
+
+And somehow... that became everything.</p>
+      <div class="game-block">
+        <div class="game-title">✦ how it started — swipe right</div>
+        <div id="game-bumble">
+          <div class="bumble-card" id="bumble-card">
+            <div class="avatar">🌸</div>
+            <div class="name">her</div>
+            <div class="sub">Riyadh · 2 km away</div>
+          </div>
+          <div class="bumble-btns">
+            <button class="btn-nope" onclick="swipe('nope')" aria-label="Nope">✕</button>
+            <button class="btn-like" onclick="swipe('like')" aria-label="Like">♥</button>
+          </div>
+          <div class="bumble-hint">tap ♥ to keep going</div>
+          <div id="bumble-result"></div>
+        </div>
+      </div>
+      <button class="cont-btn" id="btn0" onclick="unlockChapter(1)" style="display:none">continue →</button>
+    </div>
+
+    <!-- Ch 2 -->
+    <div class="chapter" id="ch1" style="opacity:0.12;pointer-events:none;">
+      <div class="chapter-label">Chapter II</div>
+      <h2>Four Months Away</h2>
+      <div class="chapter-divider"></div>
+      <p>Two months in, I had to leave for China.
+
+A long business trip. Months away from Riyadh — from her.
+
+She was devastated when she heard. She never liked long distance. She had every reason to walk away.
+
+But she didn't.
+
+She stayed on the other end of every call, every message, every silence. Through time zones and uncertainty and a situation that had no name yet.
+
+She just... stayed.</p>
+      <div class="game-block">
+        <div class="game-title">✦ answer the call</div>
+        <div id="game-call">
+          <div class="phone-frame">
+            <div class="phone-notch"></div>
+            <div class="call-avatar">🌸</div>
+            <div class="call-name">her 💕</div>
+            <div class="call-status" id="call-status">incoming call...</div>
+            <div class="call-timer" id="call-timer"></div>
+            <div class="call-btns">
+              <button class="btn-answer" onclick="answerCall()" aria-label="Answer">📞</button>
+              <button class="btn-hang" onclick="hangUp()" aria-label="Decline">📵</button>
+            </div>
+          </div>
+          <div id="call-msg"></div>
+        </div>
+      </div>
+      <button class="cont-btn" id="btn1" onclick="unlockChapter(2)" style="display:none">continue →</button>
+    </div>
+
+    <!-- Ch 3 -->
+    <div class="chapter" id="ch2" style="opacity:0.12;pointer-events:none;">
+      <div class="chapter-label">Chapter III</div>
+      <h2>The Break &amp; The Return</h2>
+      <div class="chapter-divider"></div>
+      <p>Then something happened. A break.
+
+One week. The longest week.
+
+I thought I'd lost her.
+
+But when we found our way back to each other, something had shifted. The fog cleared. We weren't in a situationship anymore — we were in love. Actually, properly, undeniably in love.
+
+I came back to Riyadh. Still busy, still traveling to Jeddah constantly for work, barely any time for calls. I was terrified she'd finally have enough.
+
+She didn't.
+
+She never did.</p>
+      <button class="cont-btn" id="btn2" onclick="unlockChapter(3)">continue →</button>
+    </div>
+
+    <!-- Ch 4 -->
+    <div class="chapter" id="ch3" style="opacity:0.12;pointer-events:none;">
+      <div class="chapter-label">Chapter IV</div>
+      <h2>Board Games &amp; First Sight</h2>
+      <div class="chapter-divider"></div>
+      <p>Two months after I got back to Saudi — that's when we finally met.
+
+Actually met. In person.
+
+I took her to a board games place. It was one of those nights that felt easy in a way you can't manufacture, like we'd already spent years together.
+
+She was stunning. She laughed and it felt like something clicking into place.
+
+After that we saw each other a few more times. Nothing huge — just being near each other, which turned out to be everything.</p>
+      <button class="cont-btn" id="btn3" onclick="unlockChapter(4)">continue →</button>
+    </div>
+
+    <!-- Ch 5 -->
+    <div class="chapter" id="ch4" style="opacity:0.12;pointer-events:none;">
+      <div class="chapter-label">Chapter V</div>
+      <h2>The Pink Apartment</h2>
+      <div class="chapter-divider"></div>
+      <p>She moved into a new apartment. Tiny. Pink. Perfect.
+
+She hated the bugs. Every time she wanted to visit, I'd come first and clear it out — because of course I would.
+
+We painted the walls baby pink together. We could've done it in a day. I made it take longer on purpose. I was having the best time of my life.
+
+We'd cuddle on that awful little mattress. Slept on it once. It was genuinely terrible. I'd do it a thousand times over.
+
+Then the real furniture: a bed, a couch, a date to IKEA. She went to Jeddah to visit her family. While she was gone, I sorted her giant closet. Had it built. Had someone spray for bugs. Made it a home before she came back.
+
+Because that's what you do for someone who stayed.</p>
+
+      <div class="game-block">
+        <div class="game-title">✦ hunt the bugs — tap to squash</div>
+        <div id="game-bugs">
+          <div class="bug-arena" id="bug-arena"></div>
+          <div id="bug-counter"></div>
+          <div id="bug-score"></div>
+        </div>
+      </div>
+
+      <div class="game-block" style="margin-top:14px;">
+        <div class="game-title">✦ paint the walls pink — draw to fill</div>
+        <div id="game-paint">
+          <div class="paint-canvas-wrap">
+            <canvas id="paint-canvas"></canvas>
+          </div>
+          <div id="paint-progress">0% painted</div>
+          <div class="paint-bar-wrap"><div class="paint-bar" id="paint-bar"></div></div>
+        </div>
+      </div>
+
+      <div class="game-block" style="margin-top:14px;">
+        <div class="game-title">✦ IKEA run — pick what she needs</div>
+        <div id="game-ikea">
+          <div class="ikea-items">
+            <div class="ikea-item" onclick="pickItem(this,'🛏️ Bed')">🛏️ Bed</div>
+            <div class="ikea-item" onclick="pickItem(this,'🛋️ Couch')">🛋️ Couch</div>
+            <div class="ikea-item" onclick="pickItem(this,'🪞 Closet')">🪞 Closet</div>
+            <div class="ikea-item" onclick="pickItem(this,'🌿 Plants')">🌿 Plants</div>
+            <div class="ikea-item" onclick="pickItem(this,'💡 Lamps')">💡 Lamps</div>
+            <div class="ikea-item" onclick="pickItem(this,'🖼️ Frames')">🖼️ Frames</div>
+          </div>
+          <div class="ikea-cart" id="ikea-cart">your cart is empty</div>
+          <div id="ikea-msg"></div>
+        </div>
+      </div>
+
+      <button class="cont-btn" id="btn4" onclick="showFinal()" style="display:none">one last thing →</button>
+    </div>
+
+  </div>
+</div>
+
+<!-- Final -->
+<div class="screen" id="s-final">
+  <div class="hearts" id="hearts-container"></div>
+  <h1>you became<br/>home.</h1>
+  <p id="final-p" style="opacity:0;transition:opacity 1.4s ease 0.6s;">Thank you for staying through every version of us.
+Through the distance, the chaos, the uncertainty.
+Through a situation with no name and no map.
+
+You stayed when you didn't have to.
+You waited when most people would've walked.
+You chose me, over and over, quietly and without a fuss.
+
+I love you.
+Happy birthday. 🎂</p>
+</div>
 
 <script>
-const firebaseConfig = {
-    apiKey: "AIzaSyCWO7JdAMVsxqUfSZ1Hlwki_Hm7IGJR3rM",
-    authDomain: "turntable-df203.firebaseapp.com",
-    projectId: "turntable-df203",
-    storageBucket: "turntable-df203.firebasestorage.app",
-    messagingSenderId: "994359441807",
-    appId: "1:994359441807:web:503ffbbc2e0e2a69bdf3fa",
-    measurementId: "G-NP50XQJN79"
-};
+/* ─── Background particles ─── */
+const bgCanvas=document.getElementById('bg');
+const bgCtx=bgCanvas.getContext('2d');
+let W,H,particles=[];
+function resize(){
+  W=bgCanvas.width=window.innerWidth;
+  H=bgCanvas.height=window.innerHeight;
+}
+resize();
+window.addEventListener('resize',()=>{resize();makeParticles();});
 
-firebase.initializeApp(firebaseConfig);
-const db = firebase.firestore();
-const docRef = db.collection("turntable_settings").doc("buttons");
-
-const buttons = document.querySelectorAll(".btn");
-const statusEl = document.getElementById("status");
-
-const times = ["0.1", "0.5", "1", "2", "3", "5"];
-
-buttons.forEach(btn => {
-    btn.addEventListener("click", () => {
-        const selected = btn.dataset.time;
-        statusEl.textContent = `${selected} SEC SELECTED`;
-
-        // Build object: selected = true, others false
-        const updateData = {};
-        times.forEach(t => updateData[t] = (t === selected));
-
-        docRef.set(updateData)
-            .then(() => console.log("Updated:", updateData))
-            .catch(err => console.error(err));
+function makeParticles(){
+  particles=[];
+  const count=Math.min(100,Math.floor(W*H/8000));
+  for(let i=0;i<count;i++){
+    particles.push({
+      x:Math.random()*W,y:Math.random()*H,
+      r:Math.random()*1.4+0.3,
+      a:Math.random(),da:(Math.random()-0.5)*0.007,
+      vx:(Math.random()-0.5)*0.08,vy:(Math.random()-0.5)*0.08
     });
-});
-</script>
+  }
+}
+makeParticles();
 
+function drawBg(){
+  bgCtx.clearRect(0,0,W,H);
+  for(const p of particles){
+    p.x+=p.vx;p.y+=p.vy;p.a+=p.da;
+    if(p.a<=0){p.a=0;p.da*=-1;}
+    if(p.a>=1){p.a=1;p.da*=-1;}
+    if(p.x<0)p.x=W;else if(p.x>W)p.x=0;
+    if(p.y<0)p.y=H;else if(p.y>H)p.y=0;
+    bgCtx.beginPath();
+    bgCtx.arc(p.x,p.y,p.r,0,Math.PI*2);
+    bgCtx.fillStyle=`rgba(255,182,217,${p.a*0.5})`;
+    bgCtx.fill();
+  }
+  requestAnimationFrame(drawBg);
+}
+drawBg();
+
+/* ─── Screen management ─── */
+function showScreen(id){
+  document.querySelectorAll('.screen').forEach(s=>s.classList.remove('active'));
+  document.getElementById(id).classList.add('active');
+}
+
+/* ─── Story init ─── */
+const CHAPTERS=5;
+let unlockedUp=0;
+
+function startStory(){
+  showScreen('s-story');
+  setTimeout(()=>{
+    document.getElementById('nav-dots').classList.add('show');
+    document.getElementById('scroll-hint').classList.add('show');
+    buildDots();
+    revealChapter(0);
+    setupPaintCanvas();
+    setupBugs();
+    startPetals();
+  },350);
+  const inner=document.getElementById('story-inner');
+  inner.addEventListener('scroll',onScroll,{passive:true});
+}
+
+/* ─── Nav dots ─── */
+function buildDots(){
+  const nd=document.getElementById('nav-dots');
+  nd.innerHTML='';
+  for(let i=0;i<CHAPTERS;i++){
+    const d=document.createElement('div');
+    d.className='dot'+(i===0?' active':'');
+    d.dataset.ch=i;
+    d.setAttribute('aria-label','Chapter '+(i+1));
+    d.onclick=()=>{
+      if(i<=unlockedUp){
+        document.getElementById('ch'+i).scrollIntoView({behavior:'smooth',block:'start'});
+      }
+    };
+    nd.appendChild(d);
+  }
+}
+
+function updateDots(){
+  const inner=document.getElementById('story-inner');
+  const scrollTop=inner.scrollTop;
+  let active=0;
+  for(let i=0;i<CHAPTERS;i++){
+    const el=document.getElementById('ch'+i);
+    if(el&&el.offsetTop-60<=scrollTop)active=i;
+  }
+  document.querySelectorAll('.dot').forEach((d,i)=>d.classList.toggle('active',i===active));
+  const total=inner.scrollHeight-inner.clientHeight;
+  document.getElementById('progress').style.width=(total>0?Math.min(100,scrollTop/total*100):0)+'%';
+}
+
+function onScroll(){updateDots();}
+
+/* ─── Chapter reveal ─── */
+function revealChapter(i){
+  const el=document.getElementById('ch'+i);
+  if(!el)return;
+  el.style.opacity='';
+  el.style.pointerEvents='';
+  requestAnimationFrame(()=>requestAnimationFrame(()=>el.classList.add('show')));
+  unlockedUp=Math.max(unlockedUp,i);
+  buildDots();
+}
+
+function unlockChapter(i){
+  revealChapter(i);
+  setTimeout(()=>{
+    const el=document.getElementById('ch'+i);
+    if(el)el.scrollIntoView({behavior:'smooth',block:'start'});
+  },150);
+}
+
+/* ─── Bumble game ─── */
+let swiped=false;
+function swipe(dir){
+  if(swiped)return;
+  const card=document.getElementById('bumble-card');
+  const res=document.getElementById('bumble-result');
+  if(dir==='like'){
+    card.style.transform='rotate(14deg) translateX(80px)';
+    card.style.opacity='0';
+    res.textContent="it's a match. 💕";
+    swiped=true;
+    setTimeout(()=>{
+      document.getElementById('btn0').style.display='inline-block';
+    },500);
+  } else {
+    card.style.transform='rotate(-8deg) translateX(-30px)';
+    card.style.transition='transform .25s ease';
+    setTimeout(()=>{
+      card.style.transform='';
+      card.style.transition='transform .3s ease';
+    },280);
+    res.textContent='you know you want to 🌸';
+  }
+}
+
+/* ─── Call game ─── */
+let callAnswered=false,callInterval=null,callSeconds=0;
+const callLines=['hey you...','i missed your voice','tell me about your day','stay a little longer?','i\'m so glad you called'];
+
+function answerCall(){
+  if(callAnswered)return;
+  callAnswered=true;
+  const status=document.getElementById('call-status');
+  const timer=document.getElementById('call-timer');
+  const msg=document.getElementById('call-msg');
+  status.textContent='connected ♥';
+  document.querySelector('.call-avatar').style.animation='none';
+  let li=0;
+  msg.textContent=callLines[li++];
+  callInterval=setInterval(()=>{
+    callSeconds++;
+    const m=String(Math.floor(callSeconds/60)).padStart(2,'0');
+    const s=String(callSeconds%60).padStart(2,'0');
+    timer.textContent=m+':'+s;
+    if(li<callLines.length&&callSeconds%4===0){
+      msg.textContent=callLines[li++];
+    }
+    if(callSeconds>=16){
+      clearInterval(callInterval);
+      msg.textContent='✓ she smiled the whole time.';
+      setTimeout(()=>{
+        document.getElementById('btn1').style.display='inline-block';
+      },400);
+    }
+  },1000);
+}
+
+function hangUp(){
+  document.getElementById('call-msg').textContent='she\'ll still be there. answer next time 🌙';
+  document.getElementById('call-status').textContent='call missed';
+}
+
+/* ─── Bug game ─── */
+let bugsTotal=6,bugsLeft=0,bugsKilled=0,bugsReady=false;
+
+function setupBugs(){
+  const arena=document.getElementById('bug-arena');
+  arena.innerHTML='';
+  bugsLeft=bugsTotal;bugsKilled=0;
+  updateBugCounter();
+  const emojis=['🪳','🪲','🐛','🦗','🕷️','🦟'];
+  for(let i=0;i<bugsTotal;i++){
+    const bug=document.createElement('div');
+    bug.className='bug';
+    bug.textContent=emojis[i%emojis.length];
+    bug.style.left=(8+Math.random()*78)+'%';
+    bug.style.top=(8+Math.random()*72)+'%';
+    bug.style.animationDuration=(Math.random()*1.5+1.2)+'s';
+    bug.style.animationDelay=(Math.random()*1.5)+'s';
+    bug.addEventListener('click',killBug);
+    bug.addEventListener('touchstart',e=>{e.preventDefault();killBug.call(bug);},{passive:false});
+    arena.appendChild(bug);
+  }
+  bugsReady=true;
+}
+
+function killBug(){
+  if(!this.parentNode)return;
+  this.style.transform='scale(0)';
+  this.style.opacity='0';
+  setTimeout(()=>{if(this.parentNode)this.parentNode.removeChild(this);},200);
+  bugsKilled++;bugsLeft--;
+  updateBugCounter();
+  if(bugsLeft===0){
+    document.getElementById('bug-score').textContent='✓ apartment cleared! she can come home 🌸';
+    checkAllDone();
+  }
+}
+
+function updateBugCounter(){
+  document.getElementById('bug-counter').textContent=`squashed: ${bugsKilled} / ${bugsTotal}`;
+}
+
+/* ─── Paint game ─── */
+let paintCtx,totalPixels=0,painting=false,paintDone=false,lastX=0,lastY=0;
+
+function setupPaintCanvas(){
+  const c=document.getElementById('paint-canvas');
+  function initCanvas(){
+    const w=c.offsetWidth||300;
+    const h=c.offsetHeight||140;
+    c.width=w;c.height=h;
+    totalPixels=w*h;
+    paintCtx=c.getContext('2d');
+    paintCtx.fillStyle='#efefef';
+    paintCtx.fillRect(0,0,w,h);
+  }
+  initCanvas();
+
+  function getPos(e){
+    const r=c.getBoundingClientRect();
+    const scaleX=c.width/r.width;
+    const scaleY=c.height/r.height;
+    const src=e.touches?e.touches[0]:e;
+    return{
+      x:(src.clientX-r.left)*scaleX,
+      y:(src.clientY-r.top)*scaleY
+    };
+  }
+
+  function startPaint(e){
+    painting=true;
+    const pos=getPos(e);
+    lastX=pos.x;lastY=pos.y;
+    doPaint(e);
+    e.preventDefault();
+  }
+  function doPaint(e){
+    if(!painting)return;
+    const{x,y}=getPos(e);
+    paintCtx.strokeStyle='#ffb6d9';
+    paintCtx.lineWidth=18;
+    paintCtx.lineCap='round';
+    paintCtx.lineJoin='round';
+    paintCtx.beginPath();
+    paintCtx.moveTo(lastX,lastY);
+    paintCtx.lineTo(x,y);
+    paintCtx.stroke();
+    lastX=x;lastY=y;
+    updatePaintProgress();
+    e.preventDefault();
+  }
+  function stopPaint(){painting=false;}
+
+  c.addEventListener('mousedown',startPaint);
+  c.addEventListener('mousemove',doPaint);
+  c.addEventListener('mouseup',stopPaint);
+  c.addEventListener('mouseleave',stopPaint);
+  c.addEventListener('touchstart',startPaint,{passive:false});
+  c.addEventListener('touchmove',doPaint,{passive:false});
+  c.addEventListener('touchend',stopPaint,{passive:false});
+}
+
+function updatePaintProgress(){
+  const c=document.getElementById('paint-canvas');
+  if(!paintCtx||!c.width)return;
+  const data=paintCtx.getImageData(0,0,c.width,c.height).data;
+  let pink=0;
+  for(let i=0;i<data.length;i+=16){
+    if(data[i]>200&&data[i+1]<185&&data[i+2]>150)pink++;
+  }
+  const sampled=data.length/16;
+  const pct=Math.min(100,Math.round(pink/sampled*100));
+  document.getElementById('paint-progress').textContent=pct+'% painted';
+  document.getElementById('paint-bar').style.width=pct+'%';
+  if(pct>=55&&!paintDone){
+    paintDone=true;
+    document.getElementById('paint-progress').textContent='✓ beautiful. just like she imagined 🌸';
+    checkAllDone();
+  }
+}
+
+/* ─── IKEA game ─── */
+let cart=[],ikea3=false;
+function pickItem(el,name){
+  if(el.classList.contains('picked'))return;
+  el.classList.add('picked');
+  cart.push(name);
+  document.getElementById('ikea-cart').textContent='cart: '+cart.join(', ');
+  const msg=document.getElementById('ikea-msg');
+  if(cart.length>=3&&!ikea3){
+    ikea3=true;
+    msg.textContent='✓ she\'s going to love it 🏠';
+    checkAllDone();
+  } else if(!ikea3){
+    msg.textContent=cart.length===1?'keep going...':'almost there...';
+  }
+}
+
+/* ─── Check all chapter 5 games done ─── */
+function checkAllDone(){
+  if(paintDone&&bugsLeft===0&&ikea3){
+    setTimeout(()=>{
+      document.getElementById('btn4').style.display='inline-block';
+    },300);
+  }
+}
+
+/* ─── Final screen ─── */
+function showFinal(){
+  showScreen('s-final');
+  document.getElementById('nav-dots').classList.remove('show');
+  document.getElementById('scroll-hint').classList.remove('show');
+  setTimeout(()=>{
+    document.getElementById('final-p').style.opacity='1';
+    launchHearts();
+  },200);
+}
+
+function launchHearts(){
+  const container=document.getElementById('hearts-container');
+  const emojis=['🌸','💕','✨','💗','🫶','🌷','🎀'];
+  const interval=setInterval(()=>{
+    const h=document.createElement('div');
+    h.className='heart';
+    h.textContent=emojis[Math.floor(Math.random()*emojis.length)];
+    h.style.left=Math.random()*100+'%';
+    h.style.animationDuration=(Math.random()*4+5)+'s';
+    h.style.fontSize=(Math.random()*14+14)+'px';
+    container.appendChild(h);
+    setTimeout(()=>{if(h.parentNode)h.parentNode.removeChild(h);},9000);
+  },350);
+  // Stop after 30s to save memory
+  setTimeout(()=>clearInterval(interval),30000);
+}
+
+/* ─── Floating petals on story screen ─── */
+function startPetals(){
+  const emojis=['🌸','🌷','✿'];
+  setInterval(()=>{
+    if(!document.getElementById('s-story').classList.contains('active'))return;
+    const p=document.createElement('div');
+    p.className='petal';
+    p.textContent=emojis[Math.floor(Math.random()*emojis.length)];
+    p.style.left=Math.random()*100+'vw';
+    p.style.top='-20px';
+    p.style.animationDuration=(Math.random()*8+10)+'s';
+    p.style.fontSize=(Math.random()*6+10)+'px';
+    document.body.appendChild(p);
+    setTimeout(()=>{if(p.parentNode)p.parentNode.removeChild(p);},20000);
+  },3000);
+}
+</script>
 </body>
 </html>
